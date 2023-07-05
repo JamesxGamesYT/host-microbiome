@@ -10,6 +10,11 @@ np.set_printoptions(precision=3, suppress=True)
 import tensorflow as tf
 from tensorflow.keras import layers, Input, initializers
 
+# Cut all those tensorflow warnings
+import logging
+tf.get_logger().setLevel(logging.ERROR)
+
+# Custom constraint settings
 class FixWeights(tf.keras.constraints.Constraint):
 
     def __call__(self, w):
@@ -20,7 +25,7 @@ class FixWeights(tf.keras.constraints.Constraint):
  
         return w
     
-with open("training_data.json", "r") as f:
+with open("training_data/100_population_training_data.json", "r") as f:
     data_text = json.load(f)
 data = {}
 input_data = []
@@ -28,7 +33,7 @@ output_data = []
 for v, new_v in data_text.items():
     # data[eval(v)] = eval(new_v)
     input_data.append(eval(v)) 
-    output_data.append(eval(new_v)) 
+    output_data.append(new_v)
 
 # train_dataset = tf.data.Dataset.from_tensor_slices((input_data, output_data))
 # model = tf.keras.Sequential([
