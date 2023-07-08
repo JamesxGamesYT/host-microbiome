@@ -20,10 +20,10 @@ tf.get_logger().setLevel(logging.ERROR)
 class FixWeights(tf.keras.constraints.Constraint):
 
     def __call__(self, w):
-        # tf.keras.backend.set_value(w[0, 0], 0)
-        # tf.keras.backend.set_value(w[1, 1], 0)
-        # tf.keras.backend.set_value(w[2, 2], 0)
-        # tf.keras.backend.set_value(w[3, 3], 0)
+        tf.keras.backend.set_value(w[0, 0], 0)
+        tf.keras.backend.set_value(w[1, 1], 0)
+        tf.keras.backend.set_value(w[2, 2], 0)
+        tf.keras.backend.set_value(w[3, 3], 0)
 
         # tf.keras.backend.set_value(w[0, 1], 0)
         # tf.keras.backend.set_value(w[0, 2], 0)
@@ -55,17 +55,17 @@ def prepare_data(load=True):
     '''
     print(load)
     if load:
-        with open("training_data/10_invasion_training_data.json", "r") as f:
+        with open("training_data/100_cycling_invasion_training_data.json", "r") as f:
             data_text = json.load(f)
     else:
-        data_text = generate_training_data(format="invasion", save=False)
+        data_text = generate_training_data(format="invasion", save=True)
     data = {}
     input_data = []
     output_data = []
     for v, new_v in data_text.items():
         # data[eval(v)] = eval(new_v)
-        input_data.append(np.array(eval(v)).reshape(4,))
-        output_data.append(np.array(new_v).reshape(4,))
+        input_data.append(np.array(eval(v)))
+        output_data.append(np.array(new_v))
     input_data = np.array(input_data)
     output_data = np.array(output_data)
     print(input_data.shape)
@@ -112,7 +112,7 @@ def run_model(load):
         use_bias=False,
         kernel_constraint=FixWeights(),
         kernel_regularizer=None,
-        # kernel_regularizer=regularizers.L1(),
+        # kernel_regularizer=regularizers.L1(l1=0.001),
     )(inputs)
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
@@ -124,12 +124,15 @@ def run_model(load):
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
     # model.fit(train_dataset, epochs=5, callbacks=[tensorboard_callback])
-    model.fit(x=input_data, y=output_data, epochs=10, callbacks=[tensorboard_callback])
+    model.fit(x=input_data, y=output_data, epochs=2, callbacks=[tensorboard_callback])
 
     model.summary()
 
     print(model(np.array([[0.25, 0.25, 0.25, 0.25]])))
 
+    model.save('saved_models/cycling_invasion_model')
     print(model.trainable_variables) 
 
-run_model(load=True)
+if __name__ == "__main__":
+    # run_model(load=True)
+    run_model(load=False)
