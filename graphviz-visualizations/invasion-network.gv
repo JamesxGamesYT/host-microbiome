@@ -1,0 +1,25 @@
+// Invasion Network
+digraph "invasion-network" {
+	graph [fixedsize=false nodesep=3 ranksep=3]
+	node [fontcolor=black fontsize=11]
+	edge [fontcolor=blue fontsize=11 weight=1]
+	size="2000,2000"
+	Aa [pos="0,0"]
+	Ab [pos="0,1"]
+	Ba [pos="1,0"]
+	Bb [pos="1,1"]
+	Aa -> Aa [label=0.271 arrowsize=2.71 color=green]
+	Ab -> Aa [label=0.9 arrowsize=9.0 color=green]
+	Ba -> Aa [label=-0.255 arrowsize=2.55 color=red]
+	Bb -> Aa [label=0.204 arrowsize=2.04 color=green]
+	Aa -> Ab [label=-0.037 arrowsize=0.37 color=red]
+	Ab -> Ab [label=0.431 arrowsize=4.31 color=green]
+	Ba -> Ab [label=-0.161 arrowsize=1.61 color=red]
+	Bb -> Ab [label=0.714 arrowsize=7.14 color=green]
+	Ba -> Ba [label=1.003 arrowsize=10.03 color=green]
+	Bb -> Ba [label=-0.004 arrowsize=0.04 color=red]
+	Aa -> Bb [label=0.002 arrowsize=0.02 color=green]
+	Ab -> Bb [label=-0.012 arrowsize=0.12 color=red]
+	Ba -> Bb [label=0.107 arrowsize=1.07 color=green]
+	Bb -> Bb [label=0.906 arrowsize=9.06 color=green]
+}

@@ -20,13 +20,90 @@ invasion_mapping = {
     3 : "Bb"
 }
 
+
+# An array that cycles
+# W = np.array([
+#     [0.0, 0.0, 1.0, 8.9],
+#     [0.0, 0.0, 6.0, 3.0],
+#     [15.5, 8.5, 0.0, 0.0],
+#     [4.5, 15.9, 0.0, 0.0]
+# ])
+
+# Non-correspondence between modeled equilibrium and cycling dominance durations (index 169)
+# W = np.array([[0, 0, 13, 11], [0, 0, 10, 16], [20, 1, 0, 0], [18, 1, 0, 0]])
+
+# Index 172, modeled divergence despite cycling
+# W = np.array([
+#     [0.0, 0.0, 12, 2],
+#     [0.0, 0.0, 11, 20],
+#     [6, 20, 0.0, 0.0],
+#     [7, 14, 0.0, 0.0]
+# ])
+
+# Index 161, tests for reliability of cycle length dominance
+W = np.array([[0, 0, 9, 13], [0, 0, 1, 16], [1, 18, 0, 0], [11, 12, 0, 0]])
+
+# An array that doesn't cycle
+# W = np.array([
+#     [0.0, 0.0, 5.0, 3.9],
+#     [0.0, 0.0, 2.0, 8.0],
+#     [15.5, 8.5, 0.0, 0.0],
+#     [4.5, 15.9, 0.0, 0.0]
+# ])
+
+
+# W = np.array([
+#     [0.0, 0.0, 9.0, 4.0],
+#     [0.0, 0.0, 7.0, 13.0],
+#     [11.5, 4.5, 0.0, 0.0],
+#     [8.5, 17.9, 0.0, 0.0]
+# ])
+
+# W = np.array([
+#     [0.0, 0.0, 5.0, 4.0],
+#     [0.0, 0.0, 7.0, 8.0],
+#     [15.5, 4.5, 0.0, 0.0],
+#     [8.5, 15.9, 0.0, 0.0]
+# ])
+
+# W = np.array([
+#     [0.0, 0.0, 5.0, 1.0],
+#     [0.0, 0.0, 7.0, 8.0],
+#     [15.5, 4.5, 0.0, 0.0],
+#     [8.5, 15.9, 0.0, 0.0]
+# ])
+
+
+# W = np.array([
+#     [0.0, 0.0, 5.8, 6.1],
+#     [0.0, 0.0, 14.3, 9.5],
+#     [8.0, 10.1, 0.0, 0.0],
+#     [11.5, 6.7, 0.0, 0.0]
+# ])
+
+# W = np.array([
+#     [0.0, 0.0, 2, 10],
+#     [0.0, 0.0, 9, 8],
+#     [11, 14, 0.0, 0.0],
+#     [20, 8, 0.0, 0.0]
+# ])
+
+
+# Non cycling where it depends on initial conditions (index 89)
+# W = np.array(
+#     [[0, 0, 2, 20],
+#     [0, 0, 13, 16],
+#     [8, 18, 0, 0],
+#     [12, 10, 0, 0]]
+# )
+
 """
 Run the discrete replicator equations for 'iter' timesteps. 
 
 Output a timeseries of the state of the system along with a timeseries of the mean fitness.
 
 """
-def run_sim(v0:int, iterations:int, n:int, W:np.array, proportionalnoise=0, constantnoise=0, format="population", training=False):
+def run_sim(v0:list, iterations:int, n:int, fitness_matrix:np.array, proportionalnoise=0, constantnoise=0, format="population", training=False):
     v = v0 #BigFloat.(v0)  # The current system state
     data =  [[] for x in range(n)]  # Timeseries of system states
     meanfitness = [0]
@@ -40,7 +117,7 @@ def run_sim(v0:int, iterations:int, n:int, W:np.array, proportionalnoise=0, cons
         # Calculate next gen vector
         π1 = np.ones(n)
         dot = np.outer(np.array([v]), np.array([v]))
-        new_v = [sum(x) for x in np.multiply(W, dot)]
+        new_v = [sum(x) for x in np.multiply(fitness_matrix, dot)]
         # v = np.multiply(np.array([v]), np.matmul(W, np.array([v], ).T).T)[0]
         # v = np.multiply(W, dot) # * π1  # Recombination and fitness 
         
@@ -73,67 +150,44 @@ def run_sim(v0:int, iterations:int, n:int, W:np.array, proportionalnoise=0, cons
 
     return data, meanfitness, training_data
 
-def run_smeared_sim(v0:list, iterations:int, n:int, proportionalnoise=0, constantnoise=0):
-    smear = [[ 0.941, -0.094,  0.148,  0.001],
-       [ 0.121,  0.971, -0.016, -0.073],
-       [-0.039, -0.002,  0.977,  0.065],
-       [-0.002,  0.053, -0.039,  0.988]]
-    model = tf.keras.models.load_model('./saved_models/cycling_invasion_model/')
+def run_smeared_sim(v0:list, iterations:int, n:int, proportionalnoise=0, constantnoise=0, index=None):
+    # smear = [[ 0.833,  0.323, -0.157, 0.005],
+    #    [-0.017 ,  0.986, 0.001,  0.029],
+    #    [ 0.094,  -0.02,  0.991, -0.066],
+    #    [-0.001, -0.009,  0.009,  1.001]],
+    smear = [[ 0.833,  -0.017, 0.094, -0.001],
+       [0.323 ,  0.986, -0.02,  -0.009],
+       [-0.157,  0.001,  0.991, 0.009],
+       [0.005, 0.029,  -0.066,  1.001]],
+    if index:
+        print(f"{index} being used!")
+        model = tf.keras.models.load_model(f'./{index}/invasion_model/')
+    else:
+        model = tf.keras.models.load_model('./saved_models/cycling_invasion_model/')
     data = [[] for x in range(n)]
     meanfitness = [0]
     v = v0
     for i in range(iterations):
-        print(i)
-        # new_v = np.matmul(smear, v)
-        new_v = model.predict(np.array([v]))[0]
+        print(f"{i}/{iterations}, {str(v)}", end="\r")
+        # print(i, v)
+        new_v = np.matmul(smear, v)[0].reshape(4,)
+        print(new_v, sum(new_v), "new v")
+        new_v = model(np.array([v]))[0]
+        print(new_v, sum(new_v), "new v modeled")
         meanfitness.append(sum(new_v))
         new_v /= sum(new_v)
-        v = new_v
+        # print(new_v, "new v")
         for i, val in enumerate(new_v):
             data[i].append(val)
+        v = new_v
     return data, meanfitness
 
-# An array that cycles
-W = np.array([
-    [0.0, 0.0, 1.0, 8.9],
-    [0.0, 0.0, 6.0, 3.0],
-    [15.5, 8.5, 0.0, 0.0],
-    [4.5, 15.9, 0.0, 0.0]
-])
 
-# An array that doesn't cycle
-# W = np.array([
-#     [0.0, 0.0, 5.0, 3.9],
-#     [0.0, 0.0, 2.0, 8.0],
-#     [15.5, 8.5, 0.0, 0.0],
-#     [4.5, 15.9, 0.0, 0.0]
-# ])
-
-
-# W = np.array([
-#     [0.0, 0.0, 9.0, 4.0],
-#     [0.0, 0.0, 7.0, 13.0],
-#     [11.5, 4.5, 0.0, 0.0],
-#     [8.5, 17.9, 0.0, 0.0]
-# ])
-
-# W = np.array([
-#     [0.0, 0.0, 5.0, 4.0],
-#     [0.0, 0.0, 7.0, 8.0],
-#     [15.5, 4.5, 0.0, 0.0],
-#     [8.5, 15.9, 0.0, 0.0]
-# ])
-
-# W = np.array([
-#     [0.0, 0.0, 5.0, 1.0],
-#     [0.0, 0.0, 7.0, 8.0],
-#     [15.5, 4.5, 0.0, 0.0],
-#     [8.5, 15.9, 0.0, 0.0]
-# ])
-
-def runplot(format):
-    data2x2, meanfit2x2, _ = run_sim([.25, .25, .25, .25], 200, 4, W, format=format, constantnoise=0, proportionalnoise=0)
-    plt_1 = plt.figure(figsize=(40, 15))
+def runplot(format, W, index=None):
+    v0 = [.25, .25, .25, .25]
+    timesteps = 1000
+    data2x2, meanfit2x2, _ = run_sim(v0, timesteps, 4, W, format=format, constantnoise=0, proportionalnoise=0)
+    plt_1 = plt.figure(figsize=(15, 8))
     if format == "population":
         for i, pop in enumerate(data2x2):
             plt.plot(pop, label=population_mapping[i])
@@ -146,31 +200,44 @@ def runplot(format):
             plt.plot(pop, label=invasion_mapping[i])
             with open(f"frequency_logs/{invasion_mapping[i]}_.txt", "w") as f:
                 f.write(str(pop))
-        data, meanfitness = run_smeared_sim([.25, .25, .25, .25], 200, 4)
+        if index:
+            data, meanfitness = run_smeared_sim(v0, timesteps, 4, index=index)
+        else:
+            data, meanfitness = run_smeared_sim(v0, timesteps, 4)
         for i, pop in enumerate(data):
             plt.plot(pop, label="modeled_"+invasion_mapping[i])
             # with open(f"frequency_logs/{invasion_mapping[i]}_.txt", "w") as f:
                 # f.write(str(pop))
         plt.legend(loc="lower right")
-        plt.savefig("graphs/cycling_invasion_data.png")
+        if index:
+            plt.savefig(f"./{index}/invasion_data.png")
+        else:
+            plt.savefig("graphs/cycling_invasion_data.png")
 
-def generate_training_data(format, save=False):
+def generate_training_data(format, fitness_matrix=None, save=False):
+    print("STUFF BEING GENERATED!")
     # Training data generation
     n = 1000
-    timesteps = 100
+    timesteps = 250
     total_training_data = {}
     for i in range(n):
         init_conditions = np.random.rand(4)
-        data2x2, meanfit2x2, training_data = run_sim(init_conditions, timesteps, 4, W, constantnoise=0, proportionalnoise=0, training=format)
+        if fitness_matrix:
+            data2x2, meanfit2x2, training_data = run_sim(init_conditions, timesteps, 4, fitness_matrix=fitness_matrix, constantnoise=0, proportionalnoise=0, training=format)
+        else:
+            data2x2, meanfit2x2, training_data = run_sim(init_conditions, timesteps, 4, fitness_matrix=W, constantnoise=0, proportionalnoise=0, training=format)
         total_training_data = {**total_training_data, **training_data}
         print(f"{i+1}/{n} complete {len(total_training_data)}", end="\r")
     if save:
-        with open(f"{dir}/training_data/{timesteps}_{format}_training_data.json", "w") as f:
+        with open(f"training_data/{timesteps}_{format}_training_data.json", "w") as f:
             json.dump(total_training_data, f, indent=4) 
         return total_training_data
     else:
         return total_training_data
 
 if __name__ == "__main__":
-    runplot("invasion")
-    # generate_training_data("invasion", save=True)
+    # runplot("invasion", W, index=110)
+    runplot("invasion", W)
+    # runplot("population", W)
+    # generate_training_data(W, "invasion", save=True)
+    # run_smeared_sim(np.array([[0.25, 0.25, 0.25, 0.25]]).reshape(4, 1), 200, 4)

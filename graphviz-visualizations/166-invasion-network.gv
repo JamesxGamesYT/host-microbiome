@@ -1,0 +1,14 @@
+// Invasion Network
+digraph "166-invasion-network" {
+	graph [dpi=200 fixedsize=false lheight=100 lwidth=100 nodesep=3 pad=0.3 ranksep=3 ratio=1 size="7.75,10.25"]
+	node [fontcolor=black fontname=Lato fontsize=60]
+	edge [fontname=Lato fontsize=60 weight=1]
+	Aa [pos="0,0" shape=circle]
+	Ab [pos="0,1" shape=circle]
+	Ba [pos="1,0" shape=circle]
+	Bb [pos="1,1" shape=circle]
+	Aa -> Ab [label=0.9 arrowsize=1.9 color=green3 penwidth=32.0]
+	Aa -> Bb [label=0.204 arrowsize=1.204 color=green3 penwidth=11.12]
+	Ab -> Bb [label=0.714 arrowsize=1.714 color=green3 penwidth=26.419999999999998]
+	Bb -> Ba [label=0.107 arrowsize=1.107 color=green3 penwidth=8.21]
+}

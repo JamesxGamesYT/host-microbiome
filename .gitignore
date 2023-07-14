@@ -1,2 +1,4 @@
 logs/*
-training_data/
+training_data/*
+2x2simulations/*
+frequency_logs/*
