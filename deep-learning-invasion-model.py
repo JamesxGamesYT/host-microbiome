@@ -4,11 +4,8 @@ import json
 import datetime
 import os
 import matplotlib.pyplot as plt
-from random import randint
+from random import randint, random
 
-
-print(os.getcwd())
-print(os.listdir())
 
 
 # Make numpy values easier to read.
@@ -16,8 +13,10 @@ np.set_printoptions(precision=3, suppress=True)
 
 import tensorflow as tf
 from tensorflow.keras import layers, Input, initializers, regularizers
-from simulation import generate_training_data, runplot
-
+# from simulation2x2 import generate_training_data, runplot
+import simulation2x2
+import simulation2x2x2
+from visualization import generate_invasion_network
 # Cut all those tensorflow warnings
 import logging
 tf.get_logger().setLevel(logging.ERROR)
@@ -56,21 +55,39 @@ class FixWeights(tf.keras.constraints.Constraint):
         # tf.keras.backend.set_value(w[3,3], 1-x[3])
         return w
 
-def prepare_data(load, W=None):
+def prepare_data(load, W=None, system="2x2", testing=False):
     '''
     Loads/creates training data for invasion modeling
     '''
     print("Prepare being called!", load)
-    if load:
-        with open("training_data/100_invasion_training_data.json", "r") as f:
-            data_text = json.load(f)
-    else:
-        if W:
-            print("W being passed!")
-            data_text = generate_training_data(W, format="invasion", save=True)
+    if system == "2x2":
+        if load:
+            with open("training_data/100_invasion_training_data.json", "r") as f:
+                data_text = json.load(f)
         else:
-            print("no W being passed!")
-            data_text = generate_training_data(format="invasion", save=True)
+            if W:
+                print("W being passed!")
+                data_text = simulation2x2.generate_training_data(fitness_matrix=W, format="invasion", save=True)
+            else:
+                print("no W being passed!")
+                if testing:
+                    data_text = simulation2x2.generate_training_data(format="invasion", save=False, n=100)
+                else:
+                    data_text = simulation2x2.generate_training_data(format="invasion", save=True)
+    elif system == "2x2x2":
+        if load:
+            with open("training_data/100_invasion_training_data_2x2x2.json", "r") as f:
+                data_text = json.load(f)
+        else:
+            if W:
+                print("W being passed!")
+                data_text = simulation2x2x2.generate_training_data(fitness_array=W, format="invasion", save=True)
+            else:
+                print("no W being passed!")
+                if testing:
+                    data_text = simulation2x2x2.generate_training_data(format="invasion", save=False, n=100)
+                else:
+                    data_text = simulation2x2x2.generate_training_data(format="invasion", save=True)
     data = {}
     input_data = []
     output_data = []
@@ -108,74 +125,137 @@ def plot_distribution(load):
     plt.savefig("graphs/random.png") 
     plt.clf()
 
-def run_model(load, W=None, index=None):
+def run_model(load, W=None, index=None, system="2x2"):
     """
     Train, fit, and save the model parameters
     """
     if W:
-        input_data, output_data = prepare_data(load, W)
+        input_data, output_data = prepare_data(load, W, system=system)
     else:
         print("no w run model, load=", load)
-        input_data, output_data = prepare_data(load)
+        input_data, output_data = prepare_data(load, system=system)
     # train_dataset = tf.data.Dataset.from_tensor_slices((input_data, output_data))
     # model = tf.keras.Sequential([
     #   Input(shape=(1,)),
     #   layers.Dense(4),
     # ])
-    inputs = Input(shape=(4,))
-    outputs = layers.Dense(4,
-        use_bias=False,
-        kernel_constraint=FixWeights(),
-        kernel_regularizer=None,
-        # kernel_regularizer=regularizers.L1(l1=0.001),
-    )(inputs)
+    if system == "2x2":
+        inputs = Input(shape=(4,))
+        outputs = layers.Dense(4,
+            use_bias=False,
+            kernel_constraint=FixWeights(),
+            kernel_regularizer=None,
+            activation="linear",
+            # kernel_regularizer=regularizers.L1(l1=0.001),
+        )(inputs)
+    elif system == "2x2x2":
+        inputs = Input(shape=(6,))
+        outputs = layers.Dense(6,
+            use_bias=False,
+            kernel_constraint=FixWeights(),
+            # kernel_regularizer=None,
+            activation="linear",
+            kernel_regularizer=regularizers.L1(l1=0.0000001),
+        )(inputs)
 
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
     model.compile(loss = tf.keras.losses.MeanSquaredError(),
-                        optimizer = tf.keras.optimizers.Adam(), run_eagerly=True)
+                        # optimizer = tf.keras.optimizers.Adam(), run_eagerly=True)
+                        optimizer = tf.keras.optimizers.Adam())
+    # model.compile(loss = tf.keras.losses.MeanAbsoluteError(),
+                        # optimizer = tf.keras.optimizers.Adam(), run_eagerly=True)
 
     log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
     # model.fit(train_dataset, epochs=5, callbacks=[tensorboard_callback])
-    model.fit(x=input_data, y=output_data, epochs=10, callbacks=[tensorboard_callback])
+    model.fit(x=input_data, y=output_data, epochs=4, shuffle=True)
 
     model.summary()
+    if system == "2x2":
+        print(model(np.array([[1/4, 1/4, 1/4, 1/4]])))
+    elif system == "2x2x2":
+        print(model(np.array([[1/6, 1/6, 1/6, 1/6, 1/6, 1/6, ]])))
 
-    print(model(np.array([[0.25, 0.25, 0.25, 0.25]])))
-
-    if index:
-        model.save(f'{index}/invasion_model')
-    else:
-        model.save('saved_models/cycling_invasion_model')
+    input_test, output_test = prepare_data(load, testing=True, system=system)
+    score = model.evaluate(input_test, output_test)
+    print(score)
     numpy_variables = np.array(model.trainable_variables)
-    print(numpy_variables)
-    eigenvalues, eigenvectors = np.linalg.eig(numpy_variables)
+    new_matrix = numpy_variables[0].T
+    print(new_matrix, "coefficients")
+    eigenvalues, eigenvectors = np.linalg.eig(new_matrix)
+    print(eigenvalues, "eigenvalues")
+    print(eigenvectors, "eigenvectors")
     if index:
-        with open(f"{index}/eig.txt", "w") as f:
-            f.write("Eigenvalues: " + str(eigenvalues))
+        if system == "2x2":
+            dir = '2x2simulations'
+        elif system == "2x2x2":
+            dir = '2x2x2simulations'
+        with open(f"{dir}/{index}/eig.txt", "w") as f:
+            f.write("Eigenvalues: \n")
+            f.writelines([str(np.around(x, 5))+"\n" for x in eigenvalues.tolist()])  
             f.write("\n")
-            f.write("Eigenvectors: " + str(eigenvectors))
+            f.write("Eigenvectors: \n")
+            f.writelines([str(np.around(x, 5))+"\n" for x in eigenvectors.tolist()])
             f.write("\n")
-            f.write(str(numpy_variables))
-        with open(f"{index}/W.txt", "w") as f:
+            f.write("Invasion matrix: \n") 
+            f.writelines([str([float(y) for y in x])+"\n" for x in new_matrix])
+        with open(f"{dir}/{index}/W.txt", "w") as f:
             f.write(str(W))
+        model.save(f'{dir}/{index}/invasion_model')
+        generate_invasion_network(new_matrix, index=index, transposed=False)
+    else:
+        if system == "2x2":
+            model.save('saved_models/cycling_invasion_model')
+        elif system == "2x2x2":
+            model.save('saved_models/cycling_invasion_model_2x2x2')
 
-def modelarray(n):
-    for index in range(76, n+76):
-        if not os.path.isdir(f"./{index}"):
-            os.mkdir(f"./{index}")
-        W = [
-            [0,0, randint(0, 20), randint(0,20)],
-            [0,0, randint(0, 20), randint(0,20)],
-            [randint(0,20), randint(0,20), 0, 0],
-            [randint(0,20), randint(0,20), 0, 0],
-        ]
-        run_model(W=W, load=False, index=index)
-        runplot(format="invasion", W=W, index=index)
+def modelarray(n, system="2x2"):
+    if system == "2x2":
+        for index in range(76, n+76):
+            if not os.path.isdir(f"./2x2simulations/{index}"):
+                os.mkdir(f"./2x2simulations/{index}")
+            W = [
+                [0,0, randint(0, 20), randint(0,20)],
+                [0,0, randint(0, 20), randint(0,20)],
+                [randint(0,20), randint(0,20), 0, 0],
+                [randint(0,20), randint(0,20), 0, 0],
+            ]
+            run_model(W=W, load=False, index=index, system="2x2")
+            simulation2x2.runplot(format="invasion", W=W, index=index)
+            simulation2x2.runplot(format="population", W=W, index=index)
+    elif system == "2x2x2":
+        for index in range(230, n+230):
+            if not os.path.isdir(f"./2x2x2simulations/{index}"):
+                os.mkdir(f"./2x2x2simulations/{index}")
+            W = [
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+                random(),
+            ]
+            run_model(W=W, load=False, index=index, system="2x2x2")
+            simulation2x2x2.runplot(format="invasion", W=W, index=index)
+            simulation2x2x2.runplot(format="population", W=W, index=index)
 
 if __name__ == "__main__":
     # run_model(load=True)
-    run_model(load=False)
-    # modelarray(100)
+    # run_model(load=False, index=164)
+    # run_model(load=False, system="2x2x2", index=141)
+    run_model(load=False, system="2x2x2", index=196)
+    # index = 143
+    # modelarray(20, system="2x2x2")
+    # run_model(load=False, system="2x2x2", index=index)
+    # simulation2x2x2.runplot(format="invasion", index=index)
+    # simulation2x2x2.runplot(format="population", index=index)
