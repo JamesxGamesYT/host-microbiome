@@ -204,10 +204,12 @@ def run_smeared_sim(v0:list, iterations:int, n:int, proportionalnoise=0, constan
 
 
 def runplot(format, W, index=None):
-    v0 = [.25, .25, .25, .25]
-    timesteps = 500
+    # v0 = [.25, .25, .25, .25]
+    v0 = [.25, 1.5, .25, 1.5]
+    timesteps = 100
     data2x2, meanfit2x2, _ = run_sim(v0, timesteps, 4, W, format=format, constantnoise=0, proportionalnoise=0)
     plt_1 = plt.figure(figsize=(8, 8))
+    # plt_1 = plt.figure(figsize=(15, 8))
     if format == "population":
         for i, pop in enumerate(data2x2):
             plt.plot(pop, label=population_mapping[i])
@@ -234,6 +236,11 @@ def runplot(format, W, index=None):
         plt.legend(loc="center right")
         plt.ylabel("Population Proportion")
         plt.xlabel('Timesteps')
+        plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.legend(loc='upper center', bbox_to_anchor=(0.4, -0.15),
+                                  fancybox=True, shadow=False, ncol=4, columnspacing=1.0)
         if index:
             plt.savefig(f"2x2simulations/{index}/invasion_data.png", bbox_inches='tight')
         else:
@@ -262,10 +269,14 @@ def generate_training_data(format, n=500, iterations=500, fitness_matrix=None, s
 if __name__ == "__main__":
     # runplot("invasion", W, index=110)
     # runplot("invasion", W)
-    for index in range(76, 176):
-        with open(f"2x2simulations/{index}/W.txt", "r") as f:
-            W = np.array(eval(f.read()))
-        runplot("invasion", W, index=index)
+    # for index in range(76, 176):
+        # with open(f"2x2simulations/{index}/W.txt", "r") as f:
+        #     W = np.array(eval(f.read()))
+        # runplot("invasion", W, index=index)
+    index = 115
+    with open(f"2x2simulations/{index}/W.txt", "r") as f:
+        W = np.array(eval(f.read()))
+    runplot("invasion", W, index=index)
     # runplot("population", W)
     # generate_training_data(W, "invasion", save=True)
     # run_smeared_sim(np.array([[0.25, 0.25, 0.25, 0.25]]).reshape(4, 1), 200, 4)

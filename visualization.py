@@ -7,7 +7,7 @@ import graphviz
 labels_2x2 = ["Aa", "Ab", "Ba", "Bb"]
 labels_2x2x2 = ["Aaa", "Aab", "Abb", "Baa", "Bab", "Bbb"]
 
-def generate_invasion_network(matrix, transposed=False, index=None):
+def generate_invasion_network(matrix, transposed=False, index=None, holobiont_frequencies=None):
     # lines = ["digraph graph {"]
     name = "invasion-network"
     if index:
@@ -28,25 +28,33 @@ def generate_invasion_network(matrix, transposed=False, index=None):
                     #  'fontname': 'Lato',
                     #  'fontname': 'Times',
         },
-        graph_attr={'fixedsize':'false',
+        graph_attr={
                     # 'fontname': 'Times', 
                      'fontname': 'Helvetica',
                     'fontpath':'mnt/nts',
                     'concentrate':'false',
-                    'beautify':'false'},
+                    'beautify':'false',
+                    'ratio':'1'},
         node_attr={'fontsize':'60', 
                      'fontcolor':'black',
                      'fontname': 'Helvetica',
                     # 'fontname': 'Lato'
                     })
-    dot.graph_attr['size'] = "7.75,7.75"
-    dot.graph_attr['lheight'] = "100"
-    dot.graph_attr['lwidth'] = "100"
+    # dot.graph_attr['size'] = "7.75,27.75"
+    # dot.graph_attr['lheight'] = "100"
+    # dot.graph_attr['lwidth'] = "100"
+    # dot.graph_attr['nodesep'] = "4"
+    # dot.graph_attr['nodesep'] = "1.2"
     dot.graph_attr['nodesep'] = "2"
+    # dot.graph_attr['ranksep'] = "4"
     dot.graph_attr['ranksep'] = "2"
-    dot.graph_attr['dpi'] = "400"
+    # dot.graph_attr['ranksep'] = "3"
+    # dot.graph_attr['ranksep'] = "1"
+    # dot.graph_attr['dpi'] = "400"
+    dot.graph_attr['ratio'] = "expand"
     # dot.graph_attr['ratio'] = "fill"
-    dot.graph_attr['ratio'] = "1"
+    # dot.graph_attr['ratio'] = "1"
+    # dot.graph_attr['ratio'] = "1"
     dot.graph_attr['pad'] = "0.3"
     # dot.graph_attr['mindist'] = "10"
     # dot.graph_attr['minlen'] = "10"
@@ -61,7 +69,52 @@ def generate_invasion_network(matrix, transposed=False, index=None):
     #         label = position_labels[i, j]
     #         print(i, j, label)
     #         dot.node(label, pos=str(i)+","+str(j), shape="circle") 
-    for label in labels:
+    for i, label in enumerate(labels):
+        if "animation" in index:
+            # if holobiont_frequencies[i] < 0.01:
+            #     color = "#fff7fb"
+            # elif holobiont_frequencies[i] < 0.03:
+            #     color = "#ece7f2"
+            # elif holobiont_frequencies[i] < 0.08:
+            #     color = "#d0d1e6"
+            # elif holobiont_frequencies[i] < 0.12:
+            #     color = "#a6bddb"
+            # elif holobiont_frequencies[i] < 0.2:
+            #     color = "#74a9cf"
+            # elif holobiont_frequencies[i] < 0.4:
+            #     color = "#3690c0"
+            # elif holobiont_frequencies[i] < 0.6:
+            #     color = "#0570b0"
+            # elif holobiont_frequencies[i] < 0.8:
+            #     color = "#045a8d"
+            # else:
+            #     color = "#023858"
+            if holobiont_frequencies[i] < 0.05:
+                color = "#ece7f2"
+            elif holobiont_frequencies[i] < 0.1:
+                color = "#d0d1e6"
+            elif holobiont_frequencies[i] < 0.2:
+                color = "#a6bddb"
+            elif holobiont_frequencies[i] < 0.3:
+                color = "#74a9cf"
+            elif holobiont_frequencies[i] < 0.4:
+                color = "#5098c8"
+            elif holobiont_frequencies[i] < 0.5:
+                color = "#4e93be"
+            elif holobiont_frequencies[i] < 0.6:
+                color = "#368cc2"
+            elif holobiont_frequencies[i] < 0.7:
+                color = "#2c80b6"
+            elif holobiont_frequencies[i] < 0.8:
+                color = "#056da7"
+            elif holobiont_frequencies[i] < 0.9:
+                color = "#045a8d"
+            elif holobiont_frequencies[i] < 0.95:
+                color = "#045388"
+            else:
+                color = "#034c82"
+            dot.node(label, shape="circle", fillcolor=color, style="filled") 
+        else:
             dot.node(label, shape="circle") 
     max_outs = [0 for x in range(len(matrix))]
     for i in range(len(matrix)):
@@ -148,11 +201,14 @@ def generate_invasion_network(matrix, transposed=False, index=None):
     # s = graphviz.Source("\n".join(lines), filename="test.gv", format="png")
     # s.view()
     if index:
-        if len(matrix) == 6:
+        if "animation" in index:
+            dot.render(directory=f"animation_frames")
+        elif len(matrix) == 6:
             dot.render(directory=f"2x2x2simulations/{index}")
         else:
             dot.render(directory=f"2x2simulations/{index}")
-    dot.render(directory="graphviz-visualizations")
+    else:
+        dot.render(directory="graphviz-visualizations")
 
 def eval_matrix(string):
     regex = r"([0-9|\.|\-]+[~\s]|\]\s{1})"
@@ -207,23 +263,23 @@ if __name__ == "__main__":
             generate_invasion_network(matrix, index=index, transposed=True)
             calculate_eig(matrix, index, transposed=True)
         if sys.argv[1] == "2x2x2":
-            for index in range(214, 249):
-                if index == 15:
-                    continue
-                print(index)
-                with open(f"2x2x2simulations/{index}/eig.txt", "r") as f:
-                    data = f.read()
-                x = np.array(eval("["+",".join(data[data.find("Invasion matrix:"):].split("\n")[1:])+"]")) 
-                generate_invasion_network(x, index=index, transposed=False)
-                calculate_eig(x, index, system="2x2x2")
+            # for index in range(214, 249):
+            #     if index == 15:
+            #         continue
+            #     print(index)
+            #     with open(f"2x2x2simulations/{index}/eig.txt", "r") as f:
+            #         data = f.read()
+            #     x = np.array(eval("["+",".join(data[data.find("Invasion matrix:"):].split("\n")[1:])+"]")) 
+            #     generate_invasion_network(x, index=index, transposed=False)
+                # calculate_eig(x, index, system="2x2x2")
             # if index == 15:
                 # continue
             # print(index)
-            # with open(f"2x2x2simulations/{index}/eig.txt", "r") as f:
-            #     data = f.read()
-            # x = np.array(eval("["+",".join(data[data.find("Invasion matrix:"):].split("\n")[1:])+"]")) 
-            # generate_invasion_network(x, index=index, transposed=False)
-            # calculate_eig(x, index, system="2x2x2")
+            with open(f"2x2x2simulations/{index}/eig.txt", "r") as f:
+                data = f.read()
+            x = np.array(eval("["+",".join(data[data.find("Invasion matrix:"):].split("\n")[1:])+"]")) 
+            generate_invasion_network(x, index=index, transposed=False)
+            calculate_eig(x, index, system="2x2x2")
     else:
         # matrix = [[ 0.969, -0.018,  0.053, -0.004],
         #         [ 0.114,  0.915,  0.054, -0.082],

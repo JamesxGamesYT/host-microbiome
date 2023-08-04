@@ -252,10 +252,12 @@ def modelarray(n, system="2x2"):
 if __name__ == "__main__":
     # run_model(load=True)
     # run_model(load=False, index=164)
-    # run_model(load=False, system="2x2x2", index=141)
-    run_model(load=False, system="2x2x2", index=196)
+    run_model(load=False, system="2x2x2", index=212)
+    # run_model(load=False, system="2x2x2", index=4)
     # index = 143
     # modelarray(20, system="2x2x2")
     # run_model(load=False, system="2x2x2", index=index)
     # simulation2x2x2.runplot(format="invasion", index=index)
     # simulation2x2x2.runplot(format="population", index=index)
+    # for i in range(1, 25):
+        # run_model(load=False, system="2x2x2", index=i, W=eval("simulation2x2x2.fitness_array_"+str(i)))

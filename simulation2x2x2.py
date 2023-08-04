@@ -20,7 +20,7 @@ invasion_mapping = {
 }
 
 plt.rcParams.update({'font.size': 32})
-plt.rcParams["font.family"] = "Times New Roman"
+# plt.rcParams["font.family"] = "Times New Roman"
 
 
 fitness_array_1 = [
@@ -230,20 +230,35 @@ fitness_array_159 = [0.06584080917782387, 0.9128722972052483, 0.6074744898475068
 fitness_array_168 = [0.5161683808502493, 0.47565618394760023, 0.7049419806221021, 0.3659344892175266, 0.6331022537061022, 0.5385943670033196, 0.2887114408013569, 0.543334726615196, 0.06950920344305267, 0.4525685357867477, 0.2632649174497571, 0.5749189039246884, 0.238998041567261, 0.12048665801633951]
 
 fitness_array_174 = [0.9254261327161667, 0.09018043843450463, 0.44131784323359635, 0.8693078383398106, 0.9203441320198759, 0.9649501737119659, 0.707014921863185, 0.4420959559520037, 0.056445270378182366, 0.06455862843702742, 0.19116732457991203, 0.17048348119775136, 0.48069794673714195, 0.7254706331031671]
+fitness_array_182 = [0.1447016707799933, 0.7115924403324695, 0.24339600554110574, 0.5429105211324968, 0.2367724815446306, 0.7455270584343952, 0.6251924178216738, 0.3916583733447301, 0.5973372868817057, 0.7174007885620134, 0.821295212249412, 0.8985014407677238, 0.19386252803759174, 0.4365865627983414]
+fitness_array_187 = [0.07322086236673808, 0.34058505480420964, 0.6216846908786864, 0.037592606043881704, 0.6103381206244174, 0.2645464198077041, 0.12540094973486193, 0.6400895062925401, 0.45613384718895933, 0.8083954942494824, 0.5386370090941469, 0.9890922252115947, 0.707810121368613, 0.5388476185694561]
 
 fitness_array_196 = [0.6092758075816938, 0.8771003358807583, 0.6876172378075436, 0.7628586392077289, 0.7063454928764284, 0.07080172634089654, 0.9315706626786847, 0.875690669011065, 0.8773477241310017, 0.6020993280536953, 0.4351455021475563, 0.8668378815091425, 0.5717680787646267, 0.8038354850924561]
 
+fitness_array_205 = [0.6851122149282356, 0.1394532242544836, 0.8994746627228287, 0.29267988176339776, 0.4694014384518147, 0.6028522867690308, 0.564680774723485, 0.924449880105367, 0.0054853060582372715, 0.009599201655421052, 0.7377510848781654, 0.04993964091661374, 0.5718849793048778, 0.250473450268498]
 fitness_array_209 = [0.6686280963332543, 0.06523711888390182, 0.17130371189915305, 0.7679868960671952, 0.9822932718736008, 0.9970217886912707, 0.4105166916871339, 0.5355536368074251, 0.09889464448619445, 0.4271626832722438, 0.2866933500044734, 0.5642015674743047, 0.37581336738318516, 0.11753413100406651]
+fitness_array_212 = [0.10055102512853642, 0.2667024409866954, 0.6084511788638057, 0.1479039595054208, 0.4196759750274658, 0.8055280106885345, 0.8041575918221776, 0.9558778576294934, 0.6277939120758741, 0.9637332219426562, 0.9640168721411865, 0.424218766131207, 0.04465385720557813, 0.8998361585334241]
+fitness_array_231 = [0.2665396136913152, 0.0019787130339511405, 0.09924019760628544, 0.5245183558823234, 0.7831038609646256, 0.11104160565335464, 0.2183956591397943, 0.459727582603367, 0.46345978407572164, 0.11835268862684079, 0.5152059687411481, 0.3535677088174173, 0.44126905716747045, 0.9484272572447772]
 
 def run_sim(v0, iterations, fitness_array, format="population", training=False):
     v = v0
+    print(v0)
     meanfitness = [0]
 
     if format == "population":
-        data =  [[] for x in range(4)]  # Timeseries of system states
+        data =  [[v[x]] for x in range(4)]  # Timeseries of system states
     else:
-        data =  [[] for x in range(6)]  # Timeseries of system states
-    
+        # data =  [[0.125, 0.25, 0.125, 0.125, 0.25, 0.125] for x in range(6)]  # Timeseries of system states
+        data =  [
+            [v[0]*v[2]*v[2]], # Aaa
+            [v[0]*v[2]*v[3]*2], # Aab
+            [v[0]*v[3]*v[3]], # Abb
+            [v[1]*v[2]*v[2]], # Baa
+            [v[1]*v[2]*v[3]*2], # Bab
+            [v[1]*v[3]*v[3]]
+            ] # Timeseries of system states
+        initial_sum = sum(x[0] for x in data)
+        data = [[x[0]/initial_sum] for x in data]
     previous_invasion_v = None
     training_data = {}
     waAa, waAb, waBa, waBb, wAaa, wAab, wAbb, wbAa, wbAb, wbBa, wbBb, wBaa, wBab, wBbb = fitness_array
@@ -342,9 +357,12 @@ def run_smeared_sim(v0, timesteps, index=None):
 
 def runplot(format, W, index=None):
     v0 = [.25, .25, .25, .25]
-    timesteps = 1000
+    # v0 = [1, 1.5, 2, 4]
+    # v0 = [2.7, .25, 2.7, .25]
+    timesteps = 100
     data2x2x2, meanfitness, _ = run_sim(v0, timesteps, W, format=format)
     plt_1 = plt.figure(figsize=(15, 8))
+    # plt_1 = plt.figure(figsize=(15, 4))
     # plt_1 = plt.figure(figsize=(8, 8))
     if format == "population":
         for i, pop in enumerate(data2x2x2):
@@ -361,24 +379,35 @@ def runplot(format, W, index=None):
             plt.plot(pop, label=invasion_mapping[i])
             with open(f"frequency_logs/{invasion_mapping[i]}_2x2x2.txt", "w") as f:
                 f.write(str(pop))
-        v0 = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
-        if index:
-            data, meanfitness = run_smeared_sim(v0, timesteps, index=index)
-        else:
-            data, meanfitness = run_smeared_sim(v0, timesteps)
-        for i, pop in enumerate(data):
-            plt.plot(pop, label="modeled_"+invasion_mapping[i])
-            with open(f"frequency_logs/{invasion_mapping[i]}_.txt", "w") as f:
-                f.write(str(pop))
+        # v0 = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
+        # if index:
+        #     data, meanfitness = run_smeared_sim(v0, timesteps, index=index)
+        # else:
+        #     data, meanfitness = run_smeared_sim(v0, timesteps)
+        # for i, pop in enumerate(data):
+        #     plt.plot(pop, label="modeled_"+invasion_mapping[i])
+        #     with open(f"frequency_logs/{invasion_mapping[i]}_.txt", "w") as f:
+        #         f.write(str(pop))
         # plt.legend(loc="center right")
-        plt.ylabel("Population Proportion")
+        plt.ylabel("Population \n Proportion")
         plt.xlabel('Timesteps')
+        # plt.ylim(0, 1)
+        # plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        # ax.set_position([box.x0, box.y0,
+                        # box.width*1, box.height * 0.5])
+
+        # Put a legend below current axis
+        # ax.legend(loc='upper center', bbox_to_anchor=(0.4, -0.15),
+        ax.legend(loc='center', bbox_to_anchor=(1.15, 0.5),
+                fancybox=True, shadow=False, ncol=1, columnspacing=1.0)
         if index:
             plt.savefig(f"2x2x2simulations/{index}/invasion_data.png", bbox_inches='tight')
         else:
             plt.savefig("graphs/cycling_invasion_data_2x2x2.png", bbox_inches='tight')
 
-def generate_training_data(format, n=500, iterations=1000, fitness_array=None, save=False):
+def generate_training_data(format, n=1000, iterations=1000, fitness_array=None, save=False):
     # Training data generation
     # n = 1000
     # timesteps = 100
@@ -388,7 +417,7 @@ def generate_training_data(format, n=500, iterations=1000, fitness_array=None, s
         if fitness_array:
             data2x2, meanfit2x2, training_data = run_sim(init_conditions, iterations, fitness_array=fitness_array, training=format)
         else:
-            data2x2, meanfit2x2, training_data = run_sim(init_conditions, iterations, fitness_array=fitness_array_196, training=format)
+            data2x2, meanfit2x2, training_data = run_sim(init_conditions, iterations, fitness_array=fitness_array_212, training=format)
         total_training_data = {**total_training_data, **training_data}
         print(f"{i+1}/{n} complete {len(total_training_data)}", end="\r")
     if save:
@@ -405,9 +434,14 @@ if __name__ == "__main__":
     # for i in range(1, 24):
         # runplot("population", eval("fitness_array_"+str(i)), index=i)
         # runplot("invasion", eval("fitness_array_"+str(i)), index=i)
-    # runplot("invasion", fitness_array_10, index=10)
-    # runplot("invasion", fitness_array_1, index=1)
-    index = 142
+    # runplot("invasion", fitness_array_142, index=142)
+    # runplot("invasion", fitness_array_2, index=2)
+    index = 178
+    # index = 216
+    # for index in range(234, 249):
+        # with open(f"2x2x2simulations/{index}/W.txt", "r") as f:
+        #     W = eval(f.read())
+        # runplot("invasion", W, index=index)
     with open(f"2x2x2simulations/{index}/W.txt", "r") as f:
         W = eval(f.read())
     runplot("invasion", W, index=index)
